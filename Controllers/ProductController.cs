@@ -8,7 +8,8 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Threading.Tasks;
-using WebApiTest.Models;
+using WebApiTest.Core;
+using WebApiTest.Data;
 
 namespace WebApiTest.Controllers
 {
@@ -16,59 +17,49 @@ namespace WebApiTest.Controllers
     [Route("[controller]")]
     public class ProductController : ControllerBase
     {
-        private readonly ApplicationContext _applicationContext;
+        private readonly IProductData productData;
+        private readonly ILogger<ProductController> logger;
 
-        private readonly ILogger<ProductController> _logger;
-        public ProductController(ApplicationContext applicationContext, ILogger<ProductController> logger)
+        public ProductController(IProductData productData, ILogger<ProductController> logger)
         {
-            _logger = logger;
-            _applicationContext = applicationContext ?? throw new ArgumentNullException(nameof(applicationContext));
+            this.productData = productData;
+            this.logger = logger;
         }
 
-        [HttpGet]
-        public IEnumerable<Product> Get()
+        [HttpGet("GetProductsByName/{name}")]
+        public IEnumerable<Product> GetProductsByName(string name)
         {
-            //-- TODO : Faire les procédures stockées pour remplacer les query (car bonne pratique) 
-            //string query = @"select ProductId, ProductName, ProductDescription, ProductPrice, ProductImage from Product";
-            //DataTable dataTable = new DataTable();
-
-            return _applicationContext.Product;
+            return productData.GetProductsByName(name);
         }
 
-        [Route("GetProducts")]
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Product>>> GetProducts()
+        [HttpGet("GetAllProducts")]
+        public IEnumerable<Product> GetProducts()
         {
-            return await _applicationContext.Product.ToListAsync();
+            return productData.GetAllProducts();
         }
 
-        [HttpPost]
-        public int Post(Product product)
+        [HttpPost("Create")]
+        public Product Create(Product newProduct)
         {
-            _applicationContext.Product.AddAsync(product);
-            return _applicationContext.SaveChanges();
+            Product p = productData.Create(newProduct);
+            productData.Commit();
+            return p;
         }
 
-        [HttpDelete]
-        public int Delete(int id)
+        [HttpPost("Update")]
+        public Product Update(Product updatedProduct)
         {
-            Product productToRemove = _applicationContext.Product.FirstOrDefault(f => f.ProductId == id);
-            _applicationContext.Product.Remove(productToRemove);
-            return _applicationContext.SaveChanges();
+            Product product = productData.Update(updatedProduct);
+            productData.Commit();
+            return product;
         }
 
-        [HttpPut]
-        public void Put()
+        [HttpDelete("{id}")]
+        public Product Delete(int id)
         {
-
-        }
-
-        [Route("Update")]
-        [HttpPut]
-        public int Update(Product product)
-        {
-            _applicationContext.Product.Update(product);
-            return _applicationContext.SaveChanges();
+            Product product = productData.Delete(id);
+            productData.Commit();
+            return product;
         }
     }
 }

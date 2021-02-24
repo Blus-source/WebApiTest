@@ -8,11 +8,11 @@ using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.SqlServer;
-using Microsoft.EntityFrameworkCore.InMemory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using WebApiTest.Data;
 
 namespace WebApiTest
 {
@@ -29,8 +29,8 @@ namespace WebApiTest
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
-            services.AddDbContext<ApplicationContext>(options => options.UseSqlServer(Configuration.GetConnectionString("DevConnection")));
-            //services.AddDbContext<ApplicationContext>(options => options.UseInMemoryDatabase());
+            services.AddDbContext<WebSiteDBContext>(options => options.UseSqlServer(Configuration.GetConnectionString("DevConnection")));
+            services.AddScoped<IProductData, SqlProductData>();
             services.AddCors();
         }
 
